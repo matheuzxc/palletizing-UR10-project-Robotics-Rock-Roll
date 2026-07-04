@@ -1,0 +1,7 @@
+{
+  "SensorActivate.py": "SensorActivate",
+  "SetSimulationParams.py": "SetSimulationParams",
+  "PrepareSimulation.py": "PrepareSimulation",
+  "RobotA_GetParts.py": "RobotA_GetParts",
+  "RobotB_StoreParts.py": "RobotB_StoreParts"
+}
