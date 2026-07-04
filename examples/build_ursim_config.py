@@ -31,26 +31,30 @@ def main() -> int:
 
     # Geometria da paletização
     cfg.pattern = PatternType.BRICK
-    cfg.pallet.nx = 3
-    cfg.pallet.ny = 3
-    cfg.pallet.layers = 2
     cfg.box.length = 100.0
     cfg.box.width = 100.0
     cfg.box.height = 100.0
+    cfg.pallet.layers = 2
+    # v2: pallet por 4 cantos no CHÃO (m). TODO: troque pelos 4 cantos reais do seu pallet.
+    # Ordem: c0 origem, c1 fim do comprimento (X), c2 diagonal oposta, c3 fim da largura (Y).
+    cfg.pallet.corners = [
+        [0.60, 0.60, 0.15],
+        [0.90, 0.60, 0.15],
+        [0.90, 0.90, 0.15],
+        [0.60, 0.90, 0.15],
+    ]
 
     # Calibração (ajuste conforme necessário)
     cfg.motion.v_nominal = 0.25
     cfg.motion.approach_height = 0.15
 
-    ensure_default_points(cfg)  # cria as entradas dos pontos (zeradas)
+    ensure_default_points(cfg)  # cria as entradas dos pontos ensinados (home, pick)
 
     # --- PONTOS MANUAIS (TODO: troque por poses alcançáveis no seu URSim) ---
-    # pose = [x, y, z, rx, ry, rz] em metros e radianos.
-    set_point(cfg, "home",            [0.9721, -0.2561, 0.8624, 1.1778, -1.2569, 1.2569])
-    set_point(cfg, "pick",            [0.6315, -0.7938, 0.2515, 1.2192, -2.6377, -0.0658])
-    set_point(cfg, "pick_approach",   [0.6315, -0.7938, 0.5455, 1.2192, -2.6377, -0.0658])
-    set_point(cfg, "pallet_corner",   [0.7930, 0.9527, 0.1681, 2.9808, -0.8398, 0.3026])
-    set_point(cfg, "pallet_approach", [0.6743, 0.7578, 0.4695, 2.8434, -0.7767, 0.2233])
+    # v2: só home e pick são ensinados; pick_approach é derivado e o pallet vem dos 4 cantos.
+    # pose = [x, y, z, rx, ry, rz] em metros e radianos (vetor de rotação).
+    set_point(cfg, "home",  [0.9721, -0.2561, 0.8624, 1.1778, -1.2569, 1.2569])
+    set_point(cfg, "pick",  [0.6315, -0.7938, 0.2515, 1.2192, -2.6377, -0.0658])
     store = ConfigStore(str(ROOT / "configs"))
     path = store.save(cfg)
     print(f"Config salva em: {path}")

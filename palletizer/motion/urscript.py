@@ -1,25 +1,33 @@
 """Gerador do ``palletizer_core.script`` (URScript nativo).
 
 Renderiza o :class:`~palletizer.planner.plan.PalletizationPlan` (fonte de verdade única)
-como URScript, relativo aos pontos ensinados por freedrive. Princípios do trabalho:
+como URScript. Princípios do trabalho:
 
 - Parâmetros de velocidade/aceleração/blend **centralizados no topo** do script (DD4).
 - ``movej`` nas transições aéreas e no retorno ao home; ``movel`` nas
   aproximações/descidas/recuos verticais.
 - ``blend_radius`` (r) nos movimentos aéreos para trajetória fluida.
-- Poses de place derivadas do canto do pallet via ``pose_trans`` (frame do pallet), com Z de
-  aproximação a partir do topo acumulado da camada (colisão ativa, nunca ponto estático).
+- ``p_pallet`` derivado dos 4 cantos (frame do pallet); poses de place por ``pose_trans``
+  relativo a esse frame, com Z do chão + topo acumulado da camada (colisão ativa).
+- ``pick_approach`` DERIVADO (offset vertical sobre o pick), não ensinado.
+- Approach do pallet DINÂMICO por caixa: offset diagonal pelo lado ainda vazio (DD4).
+- Atuador nas ventosas em ``D<gripper_do>``, mantido ``gripper_hold_s`` segundos (default 5 s).
 
 O gerador não move nada: devolve uma string. O envio é responsabilidade da camada ``comm``.
 """
 
 from __future__ import annotations
 
-from math import radians
 from typing import Dict
 
 from ..config.models import MotionParams, PalletizationConfig, TaughtPoint
-from ..planner.plan import PalletizationPlan, approach_height_mm, build_plan
+from ..planner.geometry import frame_to_ur_pose, tool_down_offset_rotvec
+from ..planner.plan import (
+    PalletizationPlan,
+    build_plan,
+    pallet_approach_pose_mm,
+)
+from ..setup.calibration import pick_approach_pose
 
 _MM = 1000.0  # o URScript trabalha em metros; o plano está em mm.
 
@@ -42,10 +50,9 @@ def generate_script(config: PalletizationConfig, plan: PalletizationPlan | None 
     m: MotionParams = config.motion
     pts = config.points
     pick = _require_point(pts, "pick")
-    pick_app = _require_point(pts, "pick_approach")
-    corner = _require_point(pts, "pallet_corner")
-    pallet_app = _require_point(pts, "pallet_approach")
     home = _require_point(pts, "home")
+    pick_app = pick_approach_pose(config)          # derivado (offset vertical sobre o pick)
+    pallet_pose = frame_to_ur_pose(plan.grid.frame)  # frame do pallet dos 4 cantos
 
     lines = []
     a = lines.append
@@ -67,17 +74,21 @@ def generate_script(config: PalletizationConfig, plan: PalletizationPlan | None 
     a("  a_joint     = %.4f   # aceleração de junta (rad/s^2)" % m.a_joint)
     a("  blend_r     = %.4f   # raio de concordância (m)" % m.blend_radius)
     a("")
-    a("  # --- pontos ensinados (freedrive) ---")
+    a("  # --- pontos: home e pick ensinados; pick_approach derivado; pallet dos 4 cantos ---")
     a("  p_home         = %s" % _pose(home.pose))
     a("  p_pick         = %s" % _pose(pick.pose))
-    a("  p_pick_app     = %s" % _pose(pick_app.pose))
-    a("  p_pallet       = %s" % _pose(corner.pose))
-    a("  p_pallet_app   = %s" % _pose(pallet_app.pose))
+    a("  p_pick_app     = %s" % _pose(pick_app))
+    a("  p_pallet       = %s" % _pose(pallet_pose))
     a("")
     a("  def gripper(state):")
-    a("    # TODO: mapear para a saída digital real da garra da célula")
-    a("    set_digital_out(0, state)")
-    a("    sleep(0.3)")
+    a("    # atuador de ventosas em D%d, mantido %.1f s para prender a caixa"
+      % (m.gripper_do, m.gripper_hold_s))
+    a("    set_digital_out(%d, state)" % m.gripper_do)
+    a("    if (state):")
+    a("      sleep(%.1f)" % m.gripper_hold_s)
+    a("    else:")
+    a("      sleep(0.3)")
+    a("    end")
     a("  end")
     a("")
     a("  movej(p_home, a=a_joint, v=v_joint)")
@@ -86,21 +97,24 @@ def generate_script(config: PalletizationConfig, plan: PalletizationPlan | None 
         dx = slot.x / _MM
         dy = slot.y / _MM
         dz = slot.z / _MM
-        rz = radians(slot.rot_z)
-        app_dz = approach_height_mm(slot, plan.box, m.approach_height) / _MM
-        a("  # caixa %d (camada %d)" % (slot.seq + 1, slot.layer))
+        # orientação do offset = garra para baixo + yaw da caixa (rotx(pi)*rotz), como no adapter
+        rvx, rvy, rvz = tool_down_offset_rotvec(slot.rot_z)
+        ax_mm, ay_mm, az_mm = pallet_approach_pose_mm(slot, plan.box, plan.grid, m)
+        adx = ax_mm / _MM
+        ady = ay_mm / _MM
+        adz = az_mm / _MM
+        a("  # caixa %d (camada %d, celula i=%d j=%d)" % (slot.seq + 1, slot.layer, slot.i, slot.j))
         # --- pega ---
         a("  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)")
         a("  movel(p_pick, a=a_nominal, v=v_nominal)")
         a("  gripper(True)")
         a("  movel(p_pick_app, a=a_nominal, v=v_nominal)")
-        # --- transporte + place (relativo ao frame do pallet) ---
-        a("  p_place     = pose_trans(p_pallet, p[%.6f, %.6f, %.6f, 0, 0, %.6f])"
-          % (dx, dy, dz, rz))
-        a("  p_place_app = pose_trans(p_pallet, p[%.6f, %.6f, %.6f, 0, 0, %.6f])"
-          % (dx, dy, app_dz, rz))
-        a("  movej(p_pallet_app, a=a_joint, v=v_joint, r=blend_r)")
-        a("  movel(p_place_app, a=a_nominal, v=v_nominal)")
+        # --- transporte + place (frame Z-up do pallet; garra p/ baixo; approach do lado vazio) ---
+        a("  p_place     = pose_trans(p_pallet, p[%.6f, %.6f, %.6f, %.6f, %.6f, %.6f])"
+          % (dx, dy, dz, rvx, rvy, rvz))
+        a("  p_place_app = pose_trans(p_pallet, p[%.6f, %.6f, %.6f, %.6f, %.6f, %.6f])"
+          % (adx, ady, adz, rvx, rvy, rvz))
+        a("  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)")
         a("  if (is_within_safety_limits(p_place)):")
         a("    movel(p_place, a=a_nominal, v=v_nominal)")
         a("    gripper(False)")

@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import Callable, Optional
 
 from ..config.models import MotionParams, PalletizationConfig
-from ..planner.plan import PalletizationPlan, approach_height_mm, build_plan
+from ..planner.plan import PalletizationPlan, build_plan, pallet_approach_pose_mm
 from .station import StationItems
 
 PoseFactory = Callable[[float, float, float, float], object]
@@ -75,19 +75,20 @@ class RoboDKAdapter:
 
         make = self._factory()
         self.placed = 0
+        robot.MoveJ(safe)              # parada segura inicial
         for slot in plan.slots:
-            app_z = approach_height_mm(slot, plan.box, motion.approach_height)
+            # approach DINÂMICO por caixa: offset diagonal pelo lado ainda vazio (DD4).
+            ax_mm, ay_mm, az_mm = pallet_approach_pose_mm(slot, plan.box, plan.grid, motion)
             target = make(slot.x, slot.y, slot.z, slot.rot_z)
-            approach = make(slot.x, slot.y, app_z, slot.rot_z)
+            approach = make(ax_mm, ay_mm, az_mm, slot.rot_z)
 
-            robot.MoveJ(safe)          # transição aérea segura
-            robot.MoveJ(approach)      # desce até a aproximação (espaço de juntas)
+            robot.MoveJ(approach)      # aproxima pelo lado vazio (espaço de juntas)
             robot.MoveL(target)        # descida linear até o ponto de place
             self._detach(tool)         # solta a caixa (place)
-            robot.MoveL(approach)      # recuo linear
+            robot.MoveL(approach)      # recuo linear pelo mesmo lado vazio
             self.placed += 1
 
-        robot.MoveJ(safe)
+        robot.MoveJ(safe)              # parada segura final
         return self.placed
 
     @staticmethod

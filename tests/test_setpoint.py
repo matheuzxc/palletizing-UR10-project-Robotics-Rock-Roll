@@ -22,7 +22,7 @@ def test_set_point_rejects_wrong_length():
 def test_manual_points_feed_urscript():
     cfg = PalletizationConfig(name="t")
     ensure_default_points(cfg)
-    for name in ("home", "pick", "pick_approach", "pallet_corner", "pallet_approach"):
+    for name in ("home", "pick"):
         set_point(cfg, name, [0.4, -0.5, 0.2, 0.0, 3.14, 0.0])
     script = generate_script(cfg)
     assert "p_pick" in script and "movel(" in script

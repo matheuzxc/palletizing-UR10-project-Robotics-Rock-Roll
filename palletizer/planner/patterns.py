@@ -1,69 +1,80 @@
-"""Motor de padrões de amarração.
+"""Motor de padrões de amarração — módulos com contrato de entrada IDÊNTICO.
 
-Estende a lógica do ``box_calc`` (estação RoboDK ``RobotB_StoreParts.py``): posições dos
-CENTROS das caixas, em mm, relativas ao frame do pallet. Cada padrão define como o arranjo
-de uma camada muda em relação à anterior — é isso que caracteriza a "amarração" que impede
-que as juntas verticais se alinhem entre camadas.
+Cada padrão é uma função ``f(box, grid, layer) -> List[(x, y, rot_z)]`` (mesma assinatura),
+registrada num dispatch. As posições são os CENTROS das caixas, em mm, relativas à origem do
+frame do pallet. ``grid`` é a grade DERIVADA (``nx``/``ny`` calculados dos 4 cantos + caixa em
+:mod:`palletizer.planner.geometry`) — nenhum padrão recomputa geometria.
 
-Cada posição é ``(x, y, rot_z_graus)``. ``rot_z`` é a orientação da caixa em torno de Z
-(0 ou 90); só afeta a pegada quando a caixa não é quadrada.
+Cada padrão define como o arranjo de uma camada muda em relação à anterior — é isso que
+caracteriza a "amarração" que impede que as juntas verticais se alinhem entre camadas.
 
-Convenção da grade: célula ``i`` centrada em ``(i + 0.5) * box``. Camadas indexadas por
-``layer`` (0-based); padrões alternam por paridade de ``layer``.
+``rot_z`` é a orientação da caixa em torno de Z (0 ou 90); só afeta a pegada quando a caixa não
+é quadrada. Convenção da grade: célula ``i`` centrada em ``(i + 0.5) * box``; ``i`` (eixo X) é o
+índice interno e ``j`` (eixo Y) o externo — a mesma ordem raster do preenchimento.
 """
 
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import Callable, List, Protocol, Tuple
 
-from ..config.models import BoxSpec, PalletSpec, PatternType
+from ..config.models import BoxSpec, PatternType
 
 Position = Tuple[float, float, float]  # (x, y, rot_z_graus)
 
 
-def _base_grid(box: BoxSpec, pallet: PalletSpec) -> List[Position]:
-    """Grade retangular padrão nx x ny, sem rotação."""
+class GridLike(Protocol):
+    """Contrato mínimo que todo padrão consome (a grade derivada)."""
+
+    nx: int
+    ny: int
+
+
+# Assinatura uniforme de TODO padrão (DD5).
+PatternFn = Callable[[BoxSpec, GridLike, int], List[Position]]
+
+
+def _base_grid(box: BoxSpec, grid: GridLike, layer: int) -> List[Position]:
+    """Grade retangular padrão nx x ny, sem rotação (base reutilizada pelos demais)."""
     positions: List[Position] = []
-    for j in range(pallet.ny):
-        for i in range(pallet.nx):
+    for j in range(grid.ny):
+        for i in range(grid.nx):
             x = (i + 0.5) * box.length
             y = (j + 0.5) * box.width
             positions.append((x, y, 0.0))
     return positions
 
 
-def _brick(box: BoxSpec, pallet: PalletSpec, layer: int) -> List[Position]:
+def _brick(box: BoxSpec, grid: GridLike, layer: int) -> List[Position]:
     """Camadas ímpares deslocadas meia-caixa em X → juntas defasadas entre camadas."""
-    positions = _base_grid(box, pallet)
+    positions = _base_grid(box, grid, layer)
     if layer % 2 == 1:
         dx = box.length / 2.0
         positions = [(x + dx, y, rot) for (x, y, rot) in positions]
     return positions
 
 
-def _pinhole(box: BoxSpec, pallet: PalletSpec, layer: int) -> List[Position]:
+def _pinhole(box: BoxSpec, grid: GridLike, layer: int) -> List[Position]:
     """Grade sem a caixa central (o 'furo') e girada 90° em camadas ímpares.
 
     O furo alterna de camada junto com a rotação, criando o encaixe característico.
     """
-    positions = _base_grid(box, pallet)
-    # índice central (mais próximo do centro da grade)
-    ci = (pallet.nx - 1) / 2.0
-    cj = (pallet.ny - 1) / 2.0
-    center_idx = round(cj) * pallet.nx + round(ci)
+    positions = _base_grid(box, grid, layer)
+    ci = (grid.nx - 1) / 2.0
+    cj = (grid.ny - 1) / 2.0
+    center_idx = round(cj) * grid.nx + round(ci)
     positions = [p for k, p in enumerate(positions) if k != center_idx]
     if layer % 2 == 1:
         positions = [(x, y, (rot + 90.0) % 180.0) for (x, y, rot) in positions]
     return positions
 
 
-def _split_block(box: BoxSpec, pallet: PalletSpec, layer: int) -> List[Position]:
+def _split_block(box: BoxSpec, grid: GridLike, layer: int) -> List[Position]:
     """Pallet dividido em metade esquerda/direita com orientações opostas, alternando por camada."""
-    positions = _base_grid(box, pallet)
-    mid = pallet.nx / 2.0
+    positions = _base_grid(box, grid, layer)
+    mid = grid.nx / 2.0
     out: List[Position] = []
     for k, (x, y, rot) in enumerate(positions):
-        i = k % pallet.nx
+        i = k % grid.nx
         left = i < mid
         # camadas pares: esquerda=0°, direita=90°; ímpares invertem
         rotated = (left == (layer % 2 == 1))
@@ -71,19 +82,27 @@ def _split_block(box: BoxSpec, pallet: PalletSpec, layer: int) -> List[Position]
     return out
 
 
-_DISPATCH = {
-    PatternType.GRID: lambda box, pallet, layer: _base_grid(box, pallet),
+_DISPATCH: dict[PatternType, PatternFn] = {
+    PatternType.GRID: _base_grid,
     PatternType.BRICK: _brick,
     PatternType.PINHOLE: _pinhole,
     PatternType.SPLIT_BLOCK: _split_block,
 }
 
+# Padrões de amarração oferecidos ao operador (o 'grid' fica como base interna, não selecionável).
+_SELECTABLE = (PatternType.BRICK, PatternType.PINHOLE, PatternType.SPLIT_BLOCK)
+
+
+def selectable_patterns() -> Tuple[PatternType, ...]:
+    """Os padrões de amarração selecionáveis na GUI (Brick, Pinhole, Split Block)."""
+    return _SELECTABLE
+
 
 def layer_positions(
-    pattern: PatternType, box: BoxSpec, pallet: PalletSpec, layer: int
+    pattern: PatternType, box: BoxSpec, grid: GridLike, layer: int
 ) -> List[Position]:
-    """Posições ``(x, y, rot_z)`` dos centros das caixas de uma camada."""
-    return _DISPATCH[pattern](box, pallet, layer)
+    """Posições ``(x, y, rot_z)`` dos centros das caixas de uma camada (contrato uniforme)."""
+    return _DISPATCH[pattern](box, grid, layer)
 
 
 def _extents(box: BoxSpec, rot_z: float) -> Tuple[float, float]:

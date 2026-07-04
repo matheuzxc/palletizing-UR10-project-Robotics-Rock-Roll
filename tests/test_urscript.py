@@ -1,6 +1,6 @@
 import pytest
 
-from palletizer.config.models import BoxSpec, PalletizationConfig, PalletSpec, PatternType
+from palletizer.config.models import BoxSpec, PalletizationConfig, PatternType
 from palletizer.motion.urscript import generate_script
 from palletizer.planner.plan import build_plan
 from palletizer.setup.calibration import ensure_default_points
@@ -9,7 +9,8 @@ from palletizer.setup.calibration import ensure_default_points
 def _config():
     cfg = PalletizationConfig(name="t")
     cfg.box = BoxSpec(100, 100, 100)
-    cfg.pallet = PalletSpec(nx=2, ny=2, layers=2)
+    cfg.pallet.corners = [[0.0, 0.0, 0.0], [0.2, 0.0, 0.0], [0.2, 0.2, 0.0], [0.0, 0.2, 0.0]]
+    cfg.pallet.layers = 2  # 200 x 200 mm → nx=2, ny=2
     cfg.pattern = PatternType.GRID
     ensure_default_points(cfg)
     return cfg
@@ -61,3 +62,34 @@ def test_starts_and_ends_at_home():
     assert "movej(p_home" in script
     # o programa termina retornando ao home e fechando o def de topo
     assert script.rstrip().endswith("movej(p_home, a=a_joint, v=v_joint)\nend")
+
+
+def test_actuator_on_d0_held_5_seconds():
+    """O atuador de ventosas fica em D0 e é mantido 5 s para prender a caixa."""
+    script = generate_script(_config())
+    assert "set_digital_out(0, state)" in script
+    assert "sleep(5.0)" in script
+
+
+def test_actuator_channel_and_hold_are_configurable():
+    cfg = _config()
+    cfg.motion.gripper_do = 3
+    cfg.motion.gripper_hold_s = 2.5
+    script = generate_script(cfg)
+    assert "set_digital_out(3, state)" in script
+    assert "sleep(2.5)" in script
+
+
+def test_pallet_frame_and_pick_approach_are_derived():
+    """p_pallet vem dos 4 cantos e p_pick_app é derivado (não ensinado)."""
+    script = generate_script(_config())
+    assert "p_pallet       = p[" in script
+    assert "p_pick_app     = p[" in script
+
+
+def test_place_approach_is_dynamic_per_box():
+    """Cada caixa tem seu p_place_app (approach diagonal do lado vazio), não um único ponto."""
+    cfg = _config()
+    plan = build_plan(cfg)
+    script = generate_script(cfg, plan)
+    assert script.count("p_place_app = pose_trans(p_pallet") == plan.total_boxes

@@ -1,4 +1,4 @@
-from palletizer.config.models import BoxSpec, PalletizationConfig, PalletSpec, PatternType
+from palletizer.config.models import BoxSpec, PalletizationConfig, PatternType
 from palletizer.planner.plan import build_plan
 from palletizer.robodk.adapter import RoboDKAdapter
 
@@ -39,7 +39,8 @@ class FakeRDK:
 def _config():
     cfg = PalletizationConfig(name="t")
     cfg.box = BoxSpec(100, 100, 100)
-    cfg.pallet = PalletSpec(nx=2, ny=2, layers=2)
+    cfg.pallet.corners = [[0.0, 0.0, 0.0], [0.2, 0.0, 0.0], [0.2, 0.2, 0.0], [0.0, 0.2, 0.0]]
+    cfg.pallet.layers = 2  # 200 x 200 mm → nx=2, ny=2
     cfg.pattern = PatternType.GRID
     return cfg
 

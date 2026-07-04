@@ -34,12 +34,20 @@ from palletizer.robodk.station import StationItems
 def build_config(args) -> PalletizationConfig:
     cfg = PalletizationConfig(name="sim_robodk")
     cfg.pattern = PatternType(args.pattern)
-    cfg.pallet.nx = args.nx
-    cfg.pallet.ny = args.ny
-    cfg.pallet.layers = args.layers
     cfg.box.length = args.box
     cfg.box.width = args.box
     cfg.box.height = args.box
+    # v2: o pallet é definido por 4 cantos (m); aqui derivamos um retângulo que comporta
+    # exatamente nx x ny caixas, no chão (z=0), para reproduzir o pedido da linha de comando.
+    length_m = args.nx * args.box / 1000.0
+    width_m = args.ny * args.box / 1000.0
+    cfg.pallet.corners = [
+        [0.0, 0.0, 0.0],
+        [length_m, 0.0, 0.0],
+        [length_m, width_m, 0.0],
+        [0.0, width_m, 0.0],
+    ]
+    cfg.pallet.layers = args.layers
     return cfg
 
 

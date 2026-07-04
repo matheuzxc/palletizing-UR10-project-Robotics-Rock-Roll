@@ -1,27 +1,38 @@
-"""Calibração centralizada: nomes de pontos e valores de movimento padrão.
+"""Calibração centralizada: pontos ensinados e valores de movimento padrão.
 
-Mantém num só lugar (a) os pontos-chave que o operador deve ensinar e (b) os parâmetros de
-velocidade/aceleração/blend — atendendo ao requisito de "calibração centralizada de padrões".
+No modelo v2 o operador ensina por freedrive apenas ``home`` e ``pick``. O ``pick_approach`` é
+DERIVADO (offset vertical sobre o pick, ver :func:`pick_approach_pose`) e o frame do pallet vem
+dos 4 cantos (config), não de um ponto ensinado. Assim há um só lugar para (a) os pontos-chave
+e (b) os parâmetros de velocidade/aceleração/blend/offsets/atuador.
 """
 
 from __future__ import annotations
 
+from typing import List
+
 from ..config.models import MotionParams, PalletizationConfig, TaughtPoint
 
-# Pontos que a célula precisa para um ciclo pick→place completo.
+# Pontos que o operador ensina por freedrive para um ciclo pick→place (v2).
 DEFAULT_POINT_NAMES = (
-    "home",            # posição segura de repouso
-    "pick",            # onde a caixa é pega
-    "pick_approach",   # aproximação vertical sobre o pick
-    "pallet_corner",   # origem do frame do pallet (canto de referência)
-    "pallet_approach",  # aproximação segura sobre o pallet
+    "home",   # posição segura de repouso
+    "pick",   # onde a caixa é pega
 )
 
 
 def ensure_default_points(config: PalletizationConfig) -> None:
-    """Garante que a config tenha uma entrada para cada ponto-chave (pose zerada se ausente)."""
+    """Garante uma entrada para cada ponto-chave ensinado (pose zerada se ausente)."""
     for name in DEFAULT_POINT_NAMES:
         config.points.setdefault(name, TaughtPoint(name=name))
+
+
+def pick_approach_pose(config: PalletizationConfig) -> List[float]:
+    """Pose de aproximação do pick = pose de pick + offset vertical (m), sem ensinar.
+
+    Deriva de ``motion.approach_pick_offset_z``; a orientação é a mesma do pick.
+    """
+    pick = config.points["pick"].pose
+    dz = config.motion.approach_pick_offset_z
+    return [pick[0], pick[1], pick[2] + dz, pick[3], pick[4], pick[5]]
 
 
 def default_motion() -> MotionParams:
