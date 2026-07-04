@@ -1,9 +1,18 @@
 """Leitura de estado do robô pela interface realtime (porta 30003).
 
-O ``base.py`` validou que a pose TCP atual está no offset ``252:300`` (6 doubles big-endian)
-do pacote realtime. Aqui isso é feito corretamente, corrigindo o bug B1 do base.py (que dava
-``recv`` antes de qualquer sincronização de pacote): lemos primeiro o inteiro de 4 bytes com
-o tamanho total da mensagem e então o pacote completo, antes de fatiar.
+Correção sobre o ``base.py``: o offset ``252:300`` que ele usava é o campo **``q actual``**
+(posições de junta em rad), NÃO a pose TCP. Emitir esses valores como ``p[x,y,z,rx,ry,rz]``
+gera poses inalcançáveis (``movej is unable to find an inverse kinematics solution``). A pose
+TCP cartesiana real ("Tool vector actual") está no offset ``444:492`` do pacote realtime.
+
+Layout do pacote realtime (bytes a partir do início, incluindo o header de 4 bytes):
+``0`` size · ``4`` time · ``12`` q target · ``60`` qd target · ``108`` qdd target ·
+``156`` I target · ``204`` M target · ``252`` **q actual** · ``300`` qd actual ·
+``348`` I actual · ``396`` I control · ``444`` **Tool vector actual (pose TCP)** ·
+``492`` TCP speed actual · ...
+
+Também corrige o bug B1 do base.py (que dava ``recv`` antes de sincronizar o pacote): lemos
+primeiro o inteiro de 4 bytes com o tamanho total da mensagem e então o corpo, antes de fatiar.
 """
 
 from __future__ import annotations
@@ -12,8 +21,9 @@ import socket
 import struct
 from typing import List, Tuple
 
-# Offset validado em base.py: 6 doubles com a pose TCP atual [x, y, z, rx, ry, rz].
-RT_TCP_POSE_SLICE: Tuple[int, int] = (252, 300)
+# Offset da pose TCP cartesiana atual [x, y, z, rx, ry, rz] ("Tool vector actual").
+# ATENÇÃO: 252:300 é q_actual (juntas), não a pose — ver docstring do módulo.
+RT_TCP_POSE_SLICE: Tuple[int, int] = (444, 492)
 
 # A interface realtime começa cada mensagem com um int32 big-endian = tamanho total.
 _HEADER = struct.Struct("!i")

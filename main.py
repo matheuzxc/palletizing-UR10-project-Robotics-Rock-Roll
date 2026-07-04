@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 
 from palletizer.app.controller import PalletizerController
 from palletizer.comm.ur_socket import URConnection
@@ -65,6 +66,9 @@ def main(argv=None) -> int:
         print(f"Enviando '{args.send}' para {cfg.robot.ip}:{cfg.robot.port} ... (o robô vai se mover)")
         with URConnection(cfg.robot.ip, cfg.robot.port) as conn:
             ctrl.send_to_robot(conn)
+            # Espera o controlador ingerir o programa antes de fechar o socket (FIN):
+            # fechar imediatamente após o envio pode abortar o programa recém-recebido.
+            time.sleep(0.5)
         print("URScript enviado. Acompanhe a execução no PolyScope do URSim.")
         return 0
 

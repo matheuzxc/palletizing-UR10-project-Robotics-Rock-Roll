@@ -51,9 +51,10 @@ Fluxo do operador:
 
 - **IP/porta padrão:** `192.168.0.10:30003` (interface realtime do UR — envio de URScript e
   leitura de estado). Ajuste na tela de Configuração ou no JSON da config.
-- **Leitura de pose (freedrive):** a pose TCP atual é lida do pacote realtime no offset
-  `252:300` (6 doubles), validado em `base.py`. Confirme o offset para a versão do controlador
-  do laboratório antes da demonstração.
+- **Leitura de pose (freedrive):** a pose TCP cartesiana atual é lida do pacote realtime no
+  offset `444:492` ("Tool vector actual", 6 doubles). ATENÇÃO: o `252:300` do `base.py` é o
+  campo `q actual` (juntas em rad), não a pose — usá-lo gera poses inalcançáveis (`movej ...
+  inverse kinematics solution`). Confirme o offset para a versão do controlador antes da demo.
 - **Calibração central:** `v_nominal`, `a_nominal`, `v_joint`, `a_joint`, `blend_radius` e
   `approach_height` ficam em `MotionParams` e são emitidos no topo do `.script`.
 - **Movimentos:** `movej` nas transições/home, `movel` na descida/recuo, `blend_radius` nos
@@ -80,6 +81,6 @@ python -m pytest -q     # 38 testes; smoke da GUI é pulado se PyQt6 não estive
 
 ## Pendências para hardware real (validar no laboratório)
 
-- Confirmar o offset `252:300` na versão do controlador do UR10 do lab.
+- Confirmar o offset `444:492` (pose TCP) na versão do controlador do UR10 do lab.
 - Mapear a saída digital real da garra em `gripper()` (hoje `set_digital_out(0, ...)`).
 - Reconciliar o frame do pallet ensinado (freedrive) com o `frame_pallet` da estação RoboDK.

@@ -7,8 +7,8 @@ from palletizer.comm.ur_state import parse_tcp_pose, read_realtime_packet
 
 
 def _packet_with_pose(pose):
-    body = bytearray(400)
-    struct.pack_into("!dddddd", body, 252 - 4, *pose)  # offset dentro do corpo (após header)
+    body = bytearray(1104)  # pacote realtime típico; Tool vector actual em 444:492
+    struct.pack_into("!dddddd", body, 444 - 4, *pose)  # offset dentro do corpo (após header)
     total = 4 + len(body)
     return struct.pack("!i", total) + bytes(body)
 
@@ -32,10 +32,10 @@ class FakeSocket:
         pass
 
 
-def test_parse_tcp_pose_reads_offset_252_300():
+def test_parse_tcp_pose_reads_offset_444_492():
     pose = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
-    body = bytearray(400)
-    struct.pack_into("!dddddd", body, 252, *pose)
+    body = bytearray(1104)
+    struct.pack_into("!dddddd", body, 444, *pose)  # "Tool vector actual", não q_actual (252)
     assert parse_tcp_pose(bytes(body)) == pytest.approx(pose)
 
 

@@ -17,9 +17,20 @@ def _config():
 
 def test_params_emitted_at_top():
     script = generate_script(_config())
-    head = script[: script.index("def palletize")]
+    # os parâmetros aparecem antes do primeiro movimento (calibração centralizada)
+    head = script[: script.index("movej(p_home")]
     for token in ("v_nominal", "a_nominal", "v_joint", "a_joint", "blend_r"):
         assert token in head
+
+
+def test_wrapped_in_single_top_level_def():
+    script = generate_script(_config())
+    # todo o programa fica num único def de topo executado automaticamente pelo
+    # controlador — sem chamada global no fim (senão o robô não se move).
+    assert "def palletizer_prog():" in script
+    assert script.count("def palletizer_prog(") == 1
+    assert script.rstrip().endswith("end")
+    assert "\npalletize()" not in script
 
 
 def test_has_movej_movel_and_safety_guard():
@@ -48,4 +59,5 @@ def test_missing_taught_point_raises():
 def test_starts_and_ends_at_home():
     script = generate_script(_config())
     assert "movej(p_home" in script
-    assert script.rstrip().endswith("palletize()")
+    # o programa termina retornando ao home e fechando o def de topo
+    assert script.rstrip().endswith("movej(p_home, a=a_joint, v=v_joint)\nend")

@@ -164,7 +164,8 @@ Há **dois canais**, um para cada renderizador.
   Está em `comm/ur_socket.py` (`URConnection.send`). A conexão é **reutilizada** e
   **serializada** (um `Lock`) para nunca haver dois comandos sobrepostos no robô — segurança.
 - **Leitura de estado:** a porta 30003 transmite um **pacote binário** contínuo. A pose atual
-  do TCP está num offset fixo (bytes **252:300** = 6 doubles big-endian), usado na captura por
+  do TCP está num offset fixo (bytes **444:492** = 6 doubles big-endian; 252:300 é `q actual`,
+  juntas — não a pose), usado na captura por
   freedrive. Está em `comm/ur_state.py`. Isso foi validado no `base.py` original.
 - **Importante:** o **mesmo canal serve o robô real e o URSim** (o simulador da UR fala o mesmo
   protocolo na 30003). Basta trocar o IP.

@@ -1,8 +1,0 @@
-# Núcleo (config, planner, comm, urscript) NÃO precisa de nada além da stdlib.
-# As dependências abaixo são para a GUI e a simulação RoboDK.
-
-robodk>=5.5      # API Python do RoboDK (robolink + robomath) — simulação/motor de padrões
-PyQt6>=6.5       # GUI do operador
-
-# Desenvolvimento
-pytest>=7.0

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import time
+
 from PyQt6 import QtWidgets
 
 from ..app.controller import PalletizerController
@@ -70,6 +72,8 @@ class RunScreen(QtWidgets.QWidget):
         try:
             with URConnection(cfg.robot.ip, cfg.robot.port) as conn:
                 self._controller().send_to_robot(conn)
+                # Espera o controlador ingerir o programa antes de fechar o socket (FIN).
+                time.sleep(0.5)
             self.output.appendPlainText("URScript enviado.")
         except Exception as exc:
             self.output.appendPlainText(f"Erro no envio: {exc}")

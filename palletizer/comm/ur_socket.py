@@ -68,7 +68,7 @@ class URConnection:
 
     # -- estado --------------------------------------------------------------------
     def read_tcp_pose(self) -> List[float]:
-        """Lê a pose TCP atual do stream realtime (offset validado 252:300)."""
+        """Lê a pose TCP cartesiana atual do stream realtime (offset 444:492, Tool vector actual)."""
         if self._sock is None:
             raise ConnectionError("URConnection não conectada.")
         with self._lock:

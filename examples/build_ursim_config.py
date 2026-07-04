@@ -25,8 +25,8 @@ from palletizer.setup.teach import set_point
 
 
 def main() -> int:
-    cfg = PalletizationConfig(name="ursim")
-    cfg.robot.ip = "192.168.2.102"   # IP do URSim
+    cfg = PalletizationConfig(name="pallet")
+    cfg.robot.ip = "192.168.2.103"   # IP do URSim
     cfg.robot.port = 30003
 
     # Geometria da paletização
@@ -46,12 +46,11 @@ def main() -> int:
 
     # --- PONTOS MANUAIS (TODO: troque por poses alcançáveis no seu URSim) ---
     # pose = [x, y, z, rx, ry, rz] em metros e radianos.
-    set_point(cfg, "home",            [0.300,  0.000, 0.500, 0.0, 3.14, 0.0])
-    set_point(cfg, "pick",            [0.438, -0.500, 0.200, 0.0, 3.14, 0.0])
-    set_point(cfg, "pick_approach",   [0.438, -0.500, 0.400, 0.0, 3.14, 0.0])
-    set_point(cfg, "pallet_corner",   [0.600,  0.200, 0.100, 0.0, 3.14, 0.0])
-    set_point(cfg, "pallet_approach", [0.600,  0.200, 0.400, 0.0, 3.14, 0.0])
-
+    set_point(cfg, "home",            [0.9721, -0.2561, 0.8624, 1.1778, -1.2569, 1.2569])
+    set_point(cfg, "pick",            [0.6315, -0.7938, 0.2515, 1.2192, -2.6377, -0.0658])
+    set_point(cfg, "pick_approach",   [0.6315, -0.7938, 0.5455, 1.2192, -2.6377, -0.0658])
+    set_point(cfg, "pallet_corner",   [0.7930, 0.9527, 0.1681, 2.9808, -0.8398, 0.3026])
+    set_point(cfg, "pallet_approach", [0.6743, 0.7578, 0.4695, 2.8434, -0.7767, 0.2233])
     store = ConfigStore(str(ROOT / "configs"))
     path = store.save(cfg)
     print(f"Config salva em: {path}")

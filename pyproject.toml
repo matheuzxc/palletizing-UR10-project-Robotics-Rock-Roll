@@ -1,0 +1,11 @@
+[project]
+name = "palletizing-ur10-project-robotics-rock-roll"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyqt6>=6.5",
+    "pytest>=7.0",
+    "robodk>=5.5",
+]

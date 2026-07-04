@@ -2,7 +2,7 @@
 
 Fluxo por ponto:
 1. Habilita o freedrive (operador move o robô à mão).
-2. Ao confirmar, lê a pose TCP atual (offset realtime 252:300) e grava no config.
+2. Ao confirmar, lê a pose TCP atual (offset realtime 444:492) e grava no config.
 3. Encerra o freedrive — SEMPRE antes de qualquer movimento automático (segurança).
 
 A dependência de comunicação é injetada (:class:`~palletizer.comm.ur_socket.URConnection`

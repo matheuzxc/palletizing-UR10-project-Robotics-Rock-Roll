@@ -127,7 +127,8 @@ Isso torna a troca de ambiente = trocar/editar um arquivo de config (objetivo do
 
 Já **validado** no `base.py`: socket `192.168.0.10:30003`, envio de URScript
 (`is_within_safety_limits` + `movej`/`movel`), e leitura de pose por parse do **pacote
-realtime no offset `252:300`** (6 doubles) após `freedrive_mode()`.
+realtime no offset `444:492`** (Tool vector actual, 6 doubles) após `freedrive_mode()`. O
+`252:300` que o `base.py` usava é `q actual` (juntas em rad), não a pose — corrigido no pacote.
 
 **A endurecer (bugs conhecidos a corrigir):**
 - **B1:** o `recv` está antes de enviar `get_actual_tcp_pose()`; abre socket novo por comando.

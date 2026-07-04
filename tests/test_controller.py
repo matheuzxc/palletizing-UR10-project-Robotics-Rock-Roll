@@ -23,7 +23,7 @@ def test_save_urscript(tmp_path):
     ctrl = PalletizerController(_config())
     path = ctrl.save_urscript(tmp_path / "scripts" / "core.script")
     assert path.is_file()
-    assert "palletize()" in path.read_text(encoding="utf-8")
+    assert "def palletizer_prog():" in path.read_text(encoding="utf-8")
 
 
 def test_send_to_robot_serialized_and_returns_idle():
