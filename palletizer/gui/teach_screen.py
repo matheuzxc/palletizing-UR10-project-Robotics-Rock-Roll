@@ -1,4 +1,4 @@
-"""Tela de ensino de pontos por freedrive."""
+"""Tela de ensino de pontos: entrada manual OU captura por freedrive."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from PyQt6 import QtWidgets
 
 from ..comm.ur_socket import URConnection
 from ..setup.calibration import DEFAULT_POINT_NAMES
-from ..setup.teach import TeachSession
+from ..setup.teach import TeachSession, set_point
 
 
 class TeachScreen(QtWidgets.QWidget):
@@ -24,9 +24,22 @@ class TeachScreen(QtWidgets.QWidget):
 
         self.point_combo = QtWidgets.QComboBox()
         self.point_combo.addItems(DEFAULT_POINT_NAMES)
+        layout.addWidget(QtWidgets.QLabel("Ponto:"))
         layout.addWidget(self.point_combo)
 
-        self.capture_btn = QtWidgets.QPushButton("Capturar pose atual")
+        # --- entrada MANUAL (principal para URSim) ---
+        layout.addWidget(QtWidgets.QLabel("Manual — pose [x, y, z, rx, ry, rz] em m/rad:"))
+        manual_row = QtWidgets.QHBoxLayout()
+        self.manual_edit = QtWidgets.QLineEdit()
+        self.manual_edit.setPlaceholderText("0.438, -0.975, 0.65, 0.881, -2.986, 0.051")
+        self.manual_btn = QtWidgets.QPushButton("Definir manualmente")
+        self.manual_btn.clicked.connect(self.on_manual)
+        manual_row.addWidget(self.manual_edit)
+        manual_row.addWidget(self.manual_btn)
+        layout.addLayout(manual_row)
+
+        # --- captura por FREEDRIVE (robô real) ---
+        self.capture_btn = QtWidgets.QPushButton("Capturar pose atual (freedrive)")
         self.capture_btn.clicked.connect(self.on_capture)
         layout.addWidget(self.capture_btn)
 
@@ -56,6 +69,19 @@ class TeachScreen(QtWidgets.QWidget):
         except Exception as exc:  # comunicação pode falhar sem robô
             self.freedrive_btn.setChecked(False)
             self.status.appendPlainText(f"Erro: {exc}")
+
+    def on_manual(self) -> None:
+        cfg = self._get_config()
+        name = self.point_combo.currentText()
+        raw = self.manual_edit.text().replace(";", ",")
+        try:
+            values = [float(v) for v in raw.split(",") if v.strip() != ""]
+            point = set_point(cfg, name, values)
+            self.status.appendPlainText(
+                f"[manual] '{name}' = {['%.3f' % v for v in point.pose]}"
+            )
+        except (ValueError, TypeError) as exc:
+            self.status.appendPlainText(f"Erro (manual): {exc}")
 
     def on_capture(self) -> None:
         try:

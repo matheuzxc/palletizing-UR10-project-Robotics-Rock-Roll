@@ -11,9 +11,27 @@ ou um duplo de teste), então esta lógica é testável sem robô.
 
 from __future__ import annotations
 
-from typing import List, Protocol
+from typing import List, Protocol, Sequence
 
 from ..config.models import PalletizationConfig, TaughtPoint
+
+
+def set_point(config: PalletizationConfig, name: str, pose: Sequence[float]) -> TaughtPoint:
+    """Define um ponto MANUALMENTE (sem robô), alternativa ao freedrive.
+
+    ``pose`` = ``[x, y, z, rx, ry, rz]`` em metros e radianos (mesmo formato de
+    ``get_actual_tcp_pose``). Útil para testes no URSim, onde não há robô físico para o
+    freedrive. Sobrescreve o ponto de mesmo nome no config.
+    """
+    values = [float(v) for v in pose]
+    if len(values) != 6:
+        raise ValueError(
+            "A pose deve ter 6 valores [x, y, z, rx, ry, rz] em metros/radianos; "
+            f"recebido {len(values)}."
+        )
+    point = TaughtPoint(name=name, pose=values)
+    config.points[name] = point
+    return point
 
 
 class PoseSource(Protocol):

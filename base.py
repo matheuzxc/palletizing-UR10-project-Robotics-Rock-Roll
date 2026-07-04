@@ -4,7 +4,7 @@ import math
 import struct
 
 # Configurações de rede validadas
-ROBOT_IP = '192.168.0.10'
+ROBOT_IP = '192.168.2.102'
 PORT = 30003
 
 
