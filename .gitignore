@@ -1,7 +1,11 @@
 # ==========================================================================
-# .gitignore — envia ao GitHub apenas o necessário (código-fonte + testes +
-# docs do repo). Artefatos gerados, dados do operador e lixo de ambiente ficam de fora.
+# .gitignore — envia ao GitHub apenas o necessário (código-fonte + README).
+# Artefatos gerados, planos de trabalho, dados do operador e lixo de ambiente
+# ficam de fora.
 # ==========================================================================
+
+# --- Planos de trabalho (artefatos internos, não fazem parte da entrega) ---
+plans/
 
 # --- Python: bytecode e caches ---
 __pycache__/

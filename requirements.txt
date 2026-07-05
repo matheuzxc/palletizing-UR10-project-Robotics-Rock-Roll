@@ -1,0 +1,5 @@
+# Dependências de runtime do Paletizador UR10.
+# O núcleo (config/planner/comm/motion) roda só com a biblioteca padrão do Python.
+# Instale com:  pip install -r requirements.txt
+PyQt6>=6.5     # GUI do operador
+robodk>=5.5    # API de simulação do RoboDK

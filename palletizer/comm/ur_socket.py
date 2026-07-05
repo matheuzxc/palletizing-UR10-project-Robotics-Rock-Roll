@@ -1,6 +1,6 @@
-"""Conexão TCP com o UR (endurecimento do ``base.py``).
+"""Conexão TCP com o UR (endurecimento do código original de laboratório).
 
-Correções sobre o base.py:
+Correções sobre o protótipo original:
 - **B1**: conexão persistente reutilizada (não um socket novo por comando) e leitura de pose
   na ordem certa (sincroniza o pacote realtime antes de fatiar — ver :mod:`ur_state`).
 - **B3**: sem código com indentação quebrada; API explícita.
