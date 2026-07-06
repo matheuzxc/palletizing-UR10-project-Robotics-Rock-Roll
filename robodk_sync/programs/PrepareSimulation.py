@@ -23,6 +23,9 @@ from robolink import *    # Robot toolbox
 
 frame_pallet        = RDK.Item('PalletA', robolink.ITEM_TYPE_FRAME)
 
+# Nome da peca de referencia na estacao
+BOX_ITEM_NAME = 'box100mm'
+
 # get variable parameters
 SIZE_BOX = RDK.getParam('SizeBox')
 SIZE_PALLET = RDK.getParam('SizePallet')
@@ -70,7 +73,7 @@ all_tools = RDK.ItemList(robolink.ITEM_TYPE_TOOL, False)
 cleanup(all_tools, 'TCP ')
 
 # copy the reference part
-partref = RDK.Item('box100mm')
+partref = RDK.Item(BOX_ITEM_NAME)
 partref.Copy()
 
 #RL.Set_Simulation_Speed(500);

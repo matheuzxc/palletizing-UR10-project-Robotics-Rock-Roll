@@ -21,9 +21,12 @@ CONV_FRAME = "ConveyorReference"
 CONV_TARGET = "Get Conveyor"        # ponto de coleta sobre a esteira
 CONV_APPROACH = "ConvApproach"      # + letra do robo (ex.: ConvApproachB)
 
+# Nome da peca de referencia na estacao para ser copiada
+BOX_ITEM_NAME = "box100mm"
+
 # Fallback (usado SO se a esteira nao for encontrada): pick ao lado do pallet.
-PICK_DX = None           # None = centro do pallet em X
-PICK_DY = -150.0
+PICK_DX = 800.0         # Atrás do robô (lado oposto ao pallet)
+PICK_DY = 150.0          # Alinhado com o meio do pallet em Y
 # -----------------------------------------------------------------------
 
 RDK = robolink.Robolink()
@@ -75,10 +78,10 @@ robot = RDK.Item("UR10 " + suffix, robolink.ITEM_TYPE_ROBOT)
 tool = RDK.Item("Gripper" + suffix, robolink.ITEM_TYPE_TOOL)
 frame_pallet = RDK.Item("Pallet" + suffix, robolink.ITEM_TYPE_FRAME)
 target_safe = RDK.Item("PalletApproach" + suffix, robolink.ITEM_TYPE_TARGET)
-partref = RDK.Item("box100mm")
+partref = RDK.Item(BOX_ITEM_NAME)
 
 for label, item in [("UR10 " + suffix, robot), ("Pallet" + suffix, frame_pallet),
-                    ("box100mm", partref)]:
+                    (BOX_ITEM_NAME, partref)]:
     if not item.Valid():
         raise Exception("Item '%s' nao encontrado na estacao. Ajuste os nomes no topo." % label)
 
