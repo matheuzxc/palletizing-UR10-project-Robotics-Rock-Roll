@@ -49,7 +49,7 @@
     ],
     "layers": 2
   },
-  "pattern": "pinhole",
+  "pattern": "split_block",
   "points": {
     "home": {
       "name": "home",
