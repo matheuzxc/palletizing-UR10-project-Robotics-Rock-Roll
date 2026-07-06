@@ -1,6 +1,6 @@
 """Leitura de estado do robô pela interface realtime (porta 30003).
 
-Correção sobre o ``base.py``: o offset ``252:300`` que ele usava é o campo **``q actual``**
+Correção sobre o protótipo original de laboratório: o offset ``252:300`` que ele usava é o campo **``q actual``**
 (posições de junta em rad), NÃO a pose TCP. Emitir esses valores como ``p[x,y,z,rx,ry,rz]``
 gera poses inalcançáveis (``movej is unable to find an inverse kinematics solution``). A pose
 TCP cartesiana real ("Tool vector actual") está no offset ``444:492`` do pacote realtime.
@@ -11,7 +11,7 @@ Layout do pacote realtime (bytes a partir do início, incluindo o header de 4 by
 ``348`` I actual · ``396`` I control · ``444`` **Tool vector actual (pose TCP)** ·
 ``492`` TCP speed actual · ...
 
-Também corrige o bug B1 do base.py (que dava ``recv`` antes de sincronizar o pacote): lemos
+Também corrige o bug B1 do protótipo original (que dava ``recv`` antes de sincronizar o pacote): lemos
 primeiro o inteiro de 4 bytes com o tamanho total da mensagem e então o corpo, antes de fatiar.
 """
 

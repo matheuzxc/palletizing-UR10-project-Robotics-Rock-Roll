@@ -1,7 +1,11 @@
 # ==========================================================================
-# .gitignore — envia ao GitHub apenas o necessário (código-fonte + testes +
-# docs do repo). Artefatos gerados, dados do operador e lixo de ambiente ficam de fora.
+# .gitignore — envia ao GitHub apenas o necessário (código-fonte + README).
+# Artefatos gerados, planos de trabalho, dados do operador e lixo de ambiente
+# ficam de fora.
 # ==========================================================================
+
+# --- Planos de trabalho (artefatos internos, não fazem parte da entrega) ---
+plans/
 
 # --- Python: bytecode e caches ---
 __pycache__/
@@ -22,16 +26,6 @@ build/
 dist/
 *.egg-info/
 .eggs/
-
-# --- Artefatos GERADOS pelo software (regeneráveis a partir das configs) ---
-# URScript gerado. Se quiser versionar um palletizer_core.script como entregável,
-# force com:  git add -f scripts/palletizer_core.script
-scripts/
-*.script
-
-# --- Dados do operador (configs locais de paletização) ---
-# A pasta é mantida no repo via configs/.gitkeep; os JSON de cada ambiente não vão.
-configs/*.json
 
 # --- Editores / IDEs ---
 .vscode/

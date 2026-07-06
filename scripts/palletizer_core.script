@@ -1,0 +1,347 @@
+# palletizer_core.script  — gerado por palletizer
+# Formato: brick | camadas: 2 | caixas: 24
+#
+# Todo o programa vive dentro de UM único def de topo: as interfaces cliente do UR
+# (30001/30002/30003) executam automaticamente a função recebida. Por isso NÃO há
+# chamada global no fim — enviar instruções soltas de escopo global não roda de
+# forma confiável (o robô fica parado, sem falha nem movimento).
+
+def palletizer_prog():
+  # --- calibração centralizada (ajuste rápido de conformidade) ---
+  v_nominal   = 0.5000   # velocidade linear (m/s)
+  a_nominal   = 0.5000   # aceleração linear (m/s^2)
+  v_joint     = 0.8000   # velocidade de junta (rad/s)
+  a_joint     = 1.2000   # aceleração de junta (rad/s^2)
+  blend_r     = 0.0200   # raio de concordância (m)
+
+  # --- pontos: home e pick ensinados; pick_approach derivado; pallet dos 4 cantos ---
+  p_home         = p[0.727900, 0.434800, 0.350000, 2.935000, 1.119000, 0.018000]
+  p_pick         = p[0.727900, 0.434800, 0.061900, 2.935000, 1.119000, 0.018000]
+  p_pick_app     = p[0.727900, 0.434800, 0.211900, 2.935000, 1.119000, 0.018000]
+  p_pallet       = p[0.969400, -0.562500, -0.405400, -0.008097, -0.014719, 2.411748]
+
+  def gripper(state):
+    # atuador de ventosas em D0, mantido 5.0 s para prender a caixa
+    set_digital_out(0, state)
+    if (state):
+      sleep(3.0)
+    else:
+      sleep(0.3)
+    end
+  end
+
+  movej(p_home, a=a_joint, v=v_joint)
+  # caixa 1 (camada 0, celula i=0 j=0)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.062500, 0.062500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.162500, 0.162500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 2 (camada 0, celula i=1 j=0)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.187500, 0.062500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.287500, 0.162500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 3 (camada 0, celula i=2 j=0)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.312500, 0.062500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.412500, 0.162500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 4 (camada 0, celula i=3 j=0)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.437500, 0.062500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.537500, 0.162500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 5 (camada 0, celula i=0 j=1)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.062500, 0.187500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.162500, 0.287500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 6 (camada 0, celula i=1 j=1)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.187500, 0.187500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.287500, 0.287500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 7 (camada 0, celula i=2 j=1)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.312500, 0.187500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.412500, 0.287500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 8 (camada 0, celula i=3 j=1)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.437500, 0.187500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.537500, 0.287500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 9 (camada 0, celula i=0 j=2)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.062500, 0.312500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.162500, 0.412500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 10 (camada 0, celula i=1 j=2)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.187500, 0.312500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.287500, 0.412500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 11 (camada 0, celula i=2 j=2)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.312500, 0.312500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.412500, 0.412500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 12 (camada 0, celula i=3 j=2)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.437500, 0.312500, 0.105000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.537500, 0.412500, 0.270000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 13 (camada 1, celula i=1 j=0)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.125000, 0.062500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.225000, 0.162500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 14 (camada 1, celula i=2 j=0)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.250000, 0.062500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.350000, 0.162500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 15 (camada 1, celula i=3 j=0)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.375000, 0.062500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.475000, 0.162500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 16 (camada 1, celula i=4 j=0)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.500000, 0.062500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.600000, 0.162500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 17 (camada 1, celula i=1 j=1)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.125000, 0.187500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.225000, 0.287500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 18 (camada 1, celula i=2 j=1)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.250000, 0.187500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.350000, 0.287500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 19 (camada 1, celula i=3 j=1)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.375000, 0.187500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.475000, 0.287500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 20 (camada 1, celula i=4 j=1)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.500000, 0.187500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.600000, 0.287500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 21 (camada 1, celula i=1 j=2)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.125000, 0.312500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.225000, 0.412500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 22 (camada 1, celula i=2 j=2)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.250000, 0.312500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.350000, 0.412500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 23 (camada 1, celula i=3 j=2)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.375000, 0.312500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.475000, 0.412500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  # caixa 24 (camada 1, celula i=4 j=2)
+  movej(p_pick_app, a=a_joint, v=v_joint, r=blend_r)
+  movel(p_pick, a=a_nominal, v=v_nominal)
+  gripper(True)
+  movel(p_pick_app, a=a_nominal, v=v_nominal)
+  p_place     = pose_trans(p_pallet, p[0.500000, 0.312500, 0.175000, 3.141593, 0.000000, 0.000000])
+  p_place_app = pose_trans(p_pallet, p[0.600000, 0.412500, 0.340000, 3.141593, 0.000000, 0.000000])
+  movej(p_place_app, a=a_joint, v=v_joint, r=blend_r)
+  if (is_within_safety_limits(p_place)):
+    movel(p_place, a=a_nominal, v=v_nominal)
+    gripper(False)
+    movel(p_place_app, a=a_nominal, v=v_nominal)
+  end
+  movej(p_home, a=a_joint, v=v_joint)
+end
