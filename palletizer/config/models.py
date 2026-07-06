@@ -58,6 +58,11 @@ class MotionParams:
     blend_radius: float = 0.02  # raio de concordância (m) nos trechos aéreos
     approach_height: float = 0.15  # folga de aproximação vertical (m) acima do topo acumulado
 
+    # -- compensação de altura no place (calibração do robô real) ----------------------
+    # Sobe o Z de TODA caixa ao pousar no pallet, para não esmagar (chão/TCP ensinado baixo).
+    # Aplicado só na geração do URScript; NÃO afeta a simulação RoboDK (plano intacto).
+    place_offset_z: float = 0.0  # m adicionados ao Z de colocação de cada caixa
+
     # -- approachPick derivado (offset vertical sobre o ponto pick) --------------------
     approach_pick_offset_z: float = 0.15  # m acima do pick
 

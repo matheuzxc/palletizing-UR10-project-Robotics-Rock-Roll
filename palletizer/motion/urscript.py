@@ -96,7 +96,7 @@ def generate_script(config: PalletizationConfig, plan: PalletizationPlan | None 
     for slot in plan.slots:
         dx = slot.x / _MM
         dy = slot.y / _MM
-        dz = slot.z / _MM
+        dz = slot.z / _MM + m.place_offset_z  # compensação de altura (não esmagar a caixa)
         # orientação do offset = garra para baixo + yaw da caixa (rotx(pi)*rotz), como no adapter
         rvx, rvy, rvz = tool_down_offset_rotvec(slot.rot_z)
         ax_mm, ay_mm, az_mm = pallet_approach_pose_mm(slot, plan.box, plan.grid, m)
