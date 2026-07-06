@@ -1,4 +1,4 @@
-#[Link para o video](https://youtu.be/yfeCSCjaX8E)
+# [Link para o video](https://youtu.be/yfeCSCjaX8E)
 
 
 # Paletizador UR10 — Robotics Rock & Roll
