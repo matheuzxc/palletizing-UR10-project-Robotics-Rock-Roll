@@ -1,3 +1,6 @@
+#[Link para o video](https://youtu.be/yfeCSCjaX8E)
+
+
 # Paletizador UR10 — Robotics Rock & Roll
 
 Software em **Python** para o operador **configurar e rodar paletizações no UR10**. A mesma
