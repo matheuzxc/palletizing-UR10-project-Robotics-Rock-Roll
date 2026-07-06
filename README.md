@@ -96,6 +96,60 @@ embutido do RoboDK).
 
 ---
 
+## A config (`configs/demo.json`) e onde ela cai no `.script`
+
+Cada arquivo em `configs/` é uma **config de paletização** (schema v2) — descreve *o quê*
+paletizar. `configs/demo.json` é o exemplo de referência. O comando
+`python main.py --gen demo` lê essa config, roda o planner e escreve
+[`scripts/palletizer_core.script`](scripts/palletizer_core.script). Abaixo, o que cada bloco
+significa e **em que ponto do URScript ele reaparece**.
+
+```jsonc
+{
+  "name": "demo",              // nome da config (arquivo configs/<name>.json)
+  "schema_version": 2,         // versão do formato (v1 é migrada automaticamente)
+  "robot":   { "ip": "192.168.0.10", "port": 30003 },
+  "motion":  { ... },          // calibração de movimento (ver tabela)
+  "box":     { "length": 125.0, "width": 125.0, "height": 70.0 },  // mm
+  "pallet":  { "corners": [c0, c1, c2, c3], "layers": 2 },         // 4 cantos no chão (m)
+  "pattern": "pinhole",        // formato de amarração (grid/brick/pinhole/split_block)
+  "points":  { "home": {...}, "pick": {...} }  // poses ensinadas [x,y,z,rx,ry,rz] (m,rad)
+}
+```
+
+### De onde vem cada linha do `.script`
+
+| Campo na config                 | Onde aparece no `palletizer_core.script`                                             |
+|---------------------------------|--------------------------------------------------------------------------------------|
+| `robot.ip` / `robot.port`       | **não** entra no script — é usado pela camada `comm` para enviar por TCP (`--send`).  |
+| `motion.v_nominal` / `a_nominal`| `v_nominal` / `a_nominal` no topo (usados nos `movel`).                               |
+| `motion.v_joint` / `a_joint`    | `v_joint` / `a_joint` no topo (usados nos `movej`).                                   |
+| `motion.blend_radius`           | `blend_r` no topo (parâmetro `r=` dos movimentos aéreos).                             |
+| `motion.approach_height`        | altura da aproximação sobre a camada — entra no Z de `p_place_app`.                   |
+| `motion.place_offset_z`         | somado ao Z de **toda** caixa em `p_place` (não esmagar a caixa no robô real).        |
+| `motion.approach_pick_offset_z` | deriva `p_pick_app` (offset vertical sobre `p_pick`).                                 |
+| `motion.pallet_approach_offset_xy/z` | offset diagonal + elevação de `p_place_app` (aproxima pelo lado ainda vazio).   |
+| `motion.gripper_do`             | `set_digital_out(N, ...)` e o `D<N>` do atuador de ventosas.                          |
+| `motion.gripper_hold_s`         | `sleep(...)` dentro de `gripper(True)` (segundos prendendo a caixa).                  |
+| `box.length/width/height`       | **não** são impressos, mas definem `nx`/`ny` da grade e os offsets `dx/dy/dz` de cada `p_place`. |
+| `pallet.corners`                | `p_pallet` (frame do pallet dos 4 cantos); todo place é `pose_trans(p_pallet, ...)`.  |
+| `pallet.layers`                 | cabeçalho `camadas: N` e o nº de caixas empilhadas (Z por camada).                    |
+| `pattern`                       | cabeçalho `Formato: ...` e a ordem/rotação das células (`i`, `j`, `rot_z`).           |
+| `points.home`                   | `p_home` (ida inicial e retorno final).                                               |
+| `points.pick`                   | `p_pick` (descida de coleta).                                                         |
+
+**Exemplo concreto (`demo.json` → script):** o primeiro canto do pallet
+`[0.9694, -0.5625, -0.4054]` vira `p_pallet = p[0.969400, -0.562500, -0.405400, ...]`; a caixa
+de `125 mm` produz o meio-passo `0.0625` que aparece nos offsets `pose_trans`; e cada `p_place`
+é montado **relativo** a `p_pallet`, com o Z somando o topo acumulado da camada + `place_offset_z`.
+
+> O `.script` é um **artefato gerado** — reflete a config no momento do `--gen`. Se você editar
+> `demo.json` (pela GUI ou à mão), rode `python main.py --gen demo` de novo para regerá-lo. Por
+> isso os números literais do `.script` versionado podem divergir da config atual até você
+> regenerar.
+
+---
+
 ## Árvore de arquivos
 
 Visão geral por responsabilidade — só os arquivos principais são detalhados pelo nome.
